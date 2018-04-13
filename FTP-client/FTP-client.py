@@ -32,7 +32,7 @@ class ClientHandler():
         if not server and not port:
             return True
         else:
-            exit("server | port | user | password 不能为空！")
+            exit("server | port 不能为空！")
 
         # args 参数校验
         if hasattr(self,args):
@@ -63,10 +63,14 @@ class ClientHandler():
             print("user | password 不能为空！")
             user = input("输入用户名>>> ")
             password = input("输入密码>>> ")
-        else:
-            pass
-            # git push test
-            # test123
+            return get_auth_result(user,password)
+        return get_auth_result(self.options.user,self.options.password)
+
+
+    def get_auth_result(self,user,password):
+        pass
+
+
 
 
 

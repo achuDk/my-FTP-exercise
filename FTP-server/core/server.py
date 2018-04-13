@@ -1,5 +1,6 @@
 import socketserver
 import json
+import pymysql
 
 
 class ServerHanlder(socketserver.BaseRequestHandler):
@@ -34,3 +35,18 @@ class ServerHanlder(socketserver.BaseRequestHandler):
     def auth(self,data):
         user = data["user"]
         pwd = data["pwd"]
+
+
+    def connect_mysql(self):
+        loginname = data["user"]
+        conn = pymysql.connect(host="localhost", port=3306, user="root", passwd="123456", db="pymysql_python")
+        cursor = conn.cursors()
+        # 定义 SQL 语句
+        # sql = "CREATE TABLE  IF NOT EXISTS user (id INT PRIMARY KEY AUTO_INCREMENT,username VARCHAR(30) NOT NULL UNIQUE ,passwd VARCHAR(255));"
+
+        cursor.execute("SELECT password from user username user=%s",(loginname,))
+        real_passwd = cursor.fetchall()
+        pwd_mysql = real_passwd[0][0]
+        conn.commit()
+        cursor.close()
+        conn.close()
