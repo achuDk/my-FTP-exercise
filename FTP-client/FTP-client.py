@@ -55,7 +55,7 @@ class ClientHandler():
         if self.authenticate():
             pass
         else:
-            print("用户名或密码有误，登录失败！")
+            print("用户名或密码有误，登录失败！ ")
 
     # 登录验证函数
     def authenticate(self):
