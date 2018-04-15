@@ -1,5 +1,6 @@
 import optparse
 import socket
+import json
 
 class ClientHandler():
     def __init__(self):
@@ -19,8 +20,9 @@ class ClientHandler():
     def verify_args(self,options,args):
         server = options.server
         port = options.port
-        user = options.user
-        password = options.password
+
+        # user = options.user
+        # password = options.password
 
         # 端口校验
         if int(port) > 0 and int(port) <65535:
@@ -41,10 +43,10 @@ class ClientHandler():
         else:
             exit("没有 %s 这个参数" %args[0])
 
-    # 链接函数
+    # 定义连接函数
     def connect(self,options):
         server = options.server
-        port = options.port
+        port = int(options.port)
         self.socket = socket.socket()
         self.socket.connect((server,port))
 
@@ -52,23 +54,42 @@ class ClientHandler():
     def interactive(self):
 
         # 用户密码登录验证
-        if self.authenticate():
-            pass
-        else:
-            print("用户名或密码有误，登录失败！ ")
+        self.authenticate()
 
     # 登录验证函数
     def authenticate(self):
+        user = self.options.user
+        password = self.options.password
         if user is None or password is None:
             print("user | password 不能为空！")
             user = input("输入用户名>>> ")
             password = input("输入密码>>> ")
-            return get_auth_result(user,password)
-        return get_auth_result(self.options.user,self.options.password)
+            return self.get_auth_result(user,password)
+        return self.get_auth_result(self.options.user,self.options.password)
+
+
+    # 定义接收信息函数
+    def response(self):
+        data = self.socket.recv(1024).decode("utf8")
+        data = json.loads(data)
+        return data
 
 
     def get_auth_result(self,user,password):
-        pass
+
+        #与服务端建立连接后，第一次通信的内容固定为  身份验证
+        data = {
+            "action":"auth",
+            "user":user,
+            "pwd":password
+        }
+
+        # 发送验证信息
+        self.socket.send(json.dumps(data).encode("utf8"))
+        response = self.response()
+        print(response)
+
+
 
 
 
