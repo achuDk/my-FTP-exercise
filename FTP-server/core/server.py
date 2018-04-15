@@ -13,6 +13,8 @@ class ServerHanlder(socketserver.BaseRequestHandler):
         while True:
             data = self.request.recv(1024).strip()
             data = json.loads(data.decode("utf8"))
+
+            # 通信body样例
             """
                 data = {
                     "action":"auth",
@@ -20,11 +22,14 @@ class ServerHanlder(socketserver.BaseRequestHandler):
                     "pwd":123
                 }
             """
-            # action不能为空
+
+            # 验证 action 不能为空
             if data.get("action"):
                 if hasattr(self,data.get("action")):
                     func = getattr(self,data.get("action"))
-                    func(**data)
+                    # print(data.get("action"))
+                    # print("data",data)
+                    func(data)
                 else:
                     print("没有这个命令，请重新开始。")
             else:
@@ -35,7 +40,10 @@ class ServerHanlder(socketserver.BaseRequestHandler):
     def auth(self,data):
         user = data["user"]
         pwd = data["pwd"]
-
+        print('data:',data)
+        print('user:',user)
+        print('pwd:',pwd)
+        print("接收到用户名和密码，开始验证")
 
     def connect_mysql(self):
         loginname = data["user"]
