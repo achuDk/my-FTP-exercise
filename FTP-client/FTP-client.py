@@ -2,6 +2,26 @@ import optparse
 import socket
 import json
 
+# 定义状态码字典
+STATUS_CODE = {
+    250 : "Invalid cmd format, e.g : {'action':'put','filename':'test.py','size':344}",
+    251 : "Invalid cmd",
+    252 : "Invalid auth data",
+    253 : "Wrong username or password",
+    254 : "Passed authentication",
+    255 : "Filename doesn't provided",
+    256 : "File doesn't exist on server",
+    257 : "Ready to send file",
+    258 : "Md5 verification",
+
+    800 : "File exist,but not complete,continue?",
+    801 : "File exist",
+    802 : "Ready to recieve data",
+
+    900 : "Md5 validate success"
+
+}
+
 class ClientHandler():
     def __init__(self):
         self.opt=optparse.OptionParser()
@@ -92,6 +112,9 @@ class ClientHandler():
 
         if response["status_code"] == 254:
             self.user = user
+            print(STATUS_CODE[254])
+        else:
+            print(STATUS_CODE[response["status_code"]])
             
 
 
