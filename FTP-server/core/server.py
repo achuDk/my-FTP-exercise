@@ -5,8 +5,24 @@ import pymysql
 
 # 定义状态码字典
 STATUS_CODE = {
+    250 : "Invalid cmd format, e.g : {'action':'put','filename':'test.py','size':344}",
+    251 : "Invalid cmd",
+    252 : "Invalid auth data",
+    253 : "Wrong username or password",
+    254 : "Passed authentication",
+    255 : "Filename doesn't provided",
+    256 : "File doesn't exist on server",
+    257 : "Ready to send file",
+    258 : "Md5 verification",
+
+    800 : "File exist,but not complete,continue?",
+    801 : "File exist",
+    802 : "Ready to recieve data",
+
+    900 : "Md5 validate success"
 
 }
+
 
 class ServerHanlder(socketserver.BaseRequestHandler):
     print('ServerHandler 类开始实例化...')
@@ -55,6 +71,7 @@ class ServerHanlder(socketserver.BaseRequestHandler):
     def send_response(self,status_code):
         response = {
             "status_code":status_code,
+            "status_msg":STATUS_CODE[status_code]
         }
         # 详见状态码字典 STATUS_CODE
 
@@ -64,7 +81,7 @@ class ServerHanlder(socketserver.BaseRequestHandler):
         # 如果username不为空，则通过，否则失败
         if username:
             print("验证通过！")
-            self.send_response()
+            self.send_response(STATUS_CODE[254])
         else:
             print("验证失败！")
 
@@ -73,14 +90,14 @@ class ServerHanlder(socketserver.BaseRequestHandler):
     def connect_mysql(self,loginname,pwd):
         conn = pymysql.connect(host="localhost", port=3306, user="root", passwd="123456", db="pymysql_python")
         # 定义cursor 接收的结果为字典形式
-        cursor = conn.cursors(cursor=pymysql.cursors.DictCursor)
+        cursor = conn.cursor(cursor=pymysql.cursors.DictCursor)
         # 定义 SQL 语句
         # sql = "CREATE TABLE  IF NOT EXISTS user (id INT PRIMARY KEY AUTO_INCREMENT,username VARCHAR(30) NOT NULL UNIQUE ,passwd VARCHAR(255));"
 
-        cursor.execute("SELECT password from user WHERE user=%s",(loginname,))
+        cursor.execute("SELECT passwd from user WHERE username=%s",(loginname,))
         db_passwd = cursor.fetchall()
-        print(db_passwd)
-        if pwd == db_passwd:
+        # print("========>",db_passwd,type(db_passwd))
+        if pwd == db_passwd[0]["passwd"]:
             return loginname
 
         conn.commit()
