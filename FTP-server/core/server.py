@@ -66,25 +66,29 @@ class ServerHanlder(socketserver.BaseRequestHandler):
         print('pwd:',pwd)
         print("接收到用户名和密码，开始验证")
         # 调用验证功能
-        self.authenticate(user,pwd)
+        username = self.authenticate(user,pwd)
+        if username:
+            self.send_response(254)
+        else:
+            self.send_response(253)
 
     def send_response(self,status_code):
+
+        # 详见状态码字典 STATUS_CODE
         response = {
             "status_code":status_code,
             "status_msg":STATUS_CODE[status_code]
         }
-        # 详见状态码字典 STATUS_CODE
+        print("response",response)
+
+        # 发送响应信息
+        self.request.sendall(json.dumps(response).encode("utf8"))
 
     # 定义验证功能
     def authenticate(self,user,pwd):
         username = self.connect_mysql(user,pwd)
         # 如果username不为空，则通过，否则失败
-        if username:
-            print("验证通过！")
-            self.send_response(STATUS_CODE[254])
-        else:
-            print("验证失败！")
-
+        return username
 
     # 定义查询mysql数据库函数
     def connect_mysql(self,loginname,pwd):
@@ -98,6 +102,8 @@ class ServerHanlder(socketserver.BaseRequestHandler):
         db_passwd = cursor.fetchall()
         # print("========>",db_passwd,type(db_passwd))
         if pwd == db_passwd[0]["passwd"]:
+            # 如果验证通过，定义对象变量 user
+            self.user = loginname
             return loginname
 
         conn.commit()

@@ -87,7 +87,12 @@ class ClientHandler():
         # 发送验证信息
         self.socket.send(json.dumps(data).encode("utf8"))
         response = self.response()
-        print(response)
+        print("response:",response)
+        print("response",response["status_code"])
+
+        if response["status_code"] == 254:
+            self.user = user
+            
 
 
 
