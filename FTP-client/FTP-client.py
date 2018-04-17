@@ -72,9 +72,23 @@ class ClientHandler():
 
     # 交互函数
     def interactive(self):
-
         # 用户密码登录验证
-        self.authenticate()
+        if self.authenticate():
+            # 用户执行cmd
+            cmd = input("[ %s ]# "%self.user).strip()
+            # 接收参数列表
+            cmd_list = cmd.split(" ")
+            if hasattr(self,cmd_list[0]):
+                func = getattr(self,cmd_list[0])
+                func(*cmd_list)
+
+
+    def put(self,*cmd_list):
+        print("put")
+        print(*cmd_list)
+        action,local_path,target_path = cmd_list
+
+
 
     # 登录验证函数
     def authenticate(self):
@@ -113,6 +127,7 @@ class ClientHandler():
         if response["status_code"] == 254:
             self.user = user
             print(STATUS_CODE[254])
+            return True
         else:
             print(STATUS_CODE[response["status_code"]])
             

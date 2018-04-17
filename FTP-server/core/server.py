@@ -72,6 +72,7 @@ class ServerHanlder(socketserver.BaseRequestHandler):
         else:
             self.send_response(253)
 
+
     def send_response(self,status_code):
 
         # 详见状态码字典 STATUS_CODE
@@ -109,3 +110,6 @@ class ServerHanlder(socketserver.BaseRequestHandler):
         conn.commit()
         cursor.close()
         conn.close()
+
+    def put(self):
+        print("put")
