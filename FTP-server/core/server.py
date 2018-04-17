@@ -96,8 +96,9 @@ class ServerHanlder(socketserver.BaseRequestHandler):
         # 定义cursor 接收的结果为字典形式
         cursor = conn.cursor(cursor=pymysql.cursors.DictCursor)
         # 定义 SQL 语句
-        # sql = "CREATE TABLE  IF NOT EXISTS user (id INT PRIMARY KEY AUTO_INCREMENT,username VARCHAR(30) NOT NULL UNIQUE ,passwd VARCHAR(255));"
-
+        sql = "CREATE TABLE  IF NOT EXISTS user (id INT PRIMARY KEY AUTO_INCREMENT,username VARCHAR(30) NOT NULL UNIQUE ,passwd VARCHAR(255));"
+        cursor.execute(sql)
+        # cursor.execute("insert into user VALUES (1,'alex','123'),(2,'obama','123')")
         cursor.execute("SELECT passwd from user WHERE username=%s",(loginname,))
         db_passwd = cursor.fetchall()
         # print("========>",db_passwd,type(db_passwd))
