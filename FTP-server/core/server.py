@@ -1,6 +1,8 @@
 import socketserver
 import json
 import pymysql
+import os
+import sys
 
 
 # 定义状态码字典
@@ -30,7 +32,7 @@ class ServerHanlder(socketserver.BaseRequestHandler):
     def handle(self):
         print('handler 函数开始执行...')
 
-        # 定义链接循环
+        # 定义连接循环
         while True:
             data = self.request.recv(1024).strip()
             data = json.loads(data.decode("utf8"))
@@ -50,7 +52,7 @@ class ServerHanlder(socketserver.BaseRequestHandler):
                     func = getattr(self,data.get("action"))
                     # print(data.get("action"))
                     # print("data",data)
-                    func(data)
+                    func(**data)
                 else:
                     print("没有这个命令，请重新开始。")
             else:
@@ -58,7 +60,7 @@ class ServerHanlder(socketserver.BaseRequestHandler):
 
 
     # auth 登录验证功能
-    def auth(self,data):
+    def auth(self,**data):
         user = data["user"]
         pwd = data["pwd"]
         print('data:',data)
@@ -97,20 +99,35 @@ class ServerHanlder(socketserver.BaseRequestHandler):
         # 定义cursor 接收的结果为字典形式
         cursor = conn.cursor(cursor=pymysql.cursors.DictCursor)
         # 定义 SQL 语句
-        sql = "CREATE TABLE  IF NOT EXISTS user (id INT PRIMARY KEY AUTO_INCREMENT,username VARCHAR(30) NOT NULL UNIQUE ,passwd VARCHAR(255));"
-        cursor.execute(sql)
-        # cursor.execute("insert into user VALUES (1,'alex','123'),(2,'obama','123')")
+        # sql = "CREATE TABLE  IF NOT EXISTS user (id INT PRIMARY KEY AUTO_INCREMENT,username VARCHAR(30) NOT NULL UNIQUE ,passwd VARCHAR(255));"
+        # cursor.execute(sql)
+        # cursor.execute("insert into user VALUES (1,'alex','123'),(2,'tom','123')")
         cursor.execute("SELECT passwd from user WHERE username=%s",(loginname,))
         db_passwd = cursor.fetchall()
         # print("========>",db_passwd,type(db_passwd))
         if pwd == db_passwd[0]["passwd"]:
             # 如果验证通过，定义对象变量 user
             self.user = loginname
+            self.main_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             return loginname
 
         conn.commit()
         cursor.close()
         conn.close()
 
-    def put(self):
-        print("put")
+    def put(self,**data):
+        print("接受到来自客户端的 put 命令 : put")
+        print("data:",data)
+        file_name = data.get("file_name")
+        file_size = data.get("file_size")
+        # 文件完整路径及文件名
+        target_path = os.path.join(self.main_path,"home",self.user,data.get("target_path"))
+        # print(target_path)
+
+        # 判断本地是否已经存在文件且文件是否完整
+        if os.path.exists(target_path):
+            pass
+        else:
+            # 文件不存在时
+            msg = "确定上传 %s 文件？ < Y/n >" %file_name
+            self.request.sendall(msg.encode("utf8"))

@@ -1,6 +1,7 @@
 import optparse
 import socket
 import json
+import os
 
 # 定义状态码字典
 STATUS_CODE = {
@@ -35,6 +36,8 @@ class ClientHandler():
 
         self.verify_args(self.options,self.args)
         self.connect(self.options)
+        self.main_path = os.path.dirname(os.path.abspath(__file__))
+
 
     # 参数校验
     def verify_args(self,options,args):
@@ -84,9 +87,39 @@ class ClientHandler():
 
 
     def put(self,*cmd_list):
-        print("put")
-        print(*cmd_list)
+        print("执行命令 : put")
+        # print(*cmd_list)
+        # put , 123.png , image
         action,local_path,target_path = cmd_list
+        print("执行 put 的目标路径：", target_path)
+        local_path = os.path.join(self.main_path,local_path)
+        print("文件绝对路径及文件名:", local_path)
+        # 文件名
+        file_name = os.path.basename(local_path)
+        # print("file_name", file_name)
+        # 文件大小
+        file_size = os.stat(local_path).st_size
+        print("执行 put 的文件大小:", file_size)
+        # 定义通信内容
+        data = {
+            "action":"put",
+            "file_name":file_name,
+            "file_seze":file_size,
+            "target_path":target_path
+        }
+
+        # 发送通信内容
+        self.socket.send(json.dumps(data).encode("utf8"))
+
+        # 接受服务端的响应，服务端要判断put的文件是否存在以及是否完整
+        is_exists = self.socket.recv(1024).decode("utf8")
+        cmd = input(is_exists )
+        if cmd != "n":
+            print("取消上传！")
+        else:
+            print("上传中... ")
+            pass
+
 
 
 
