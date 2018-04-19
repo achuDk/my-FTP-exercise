@@ -121,12 +121,12 @@ class ServerHanlder(socketserver.BaseRequestHandler):
         file_name = data.get("file_name")
         file_size = data.get("file_size")
         # 文件完整路径及文件名
-        target_path = os.path.join(self.main_path,"home",self.user,data.get("target_path"))
-        # print(target_path)
+        target_path = os.path.join(self.main_path,"home",self.user,data.get("target_path"),file_name)
+        print("target_path",target_path)
 
         # 判断本地是否已经存在文件且文件是否完整
         if os.path.exists(target_path):
-            pass
+            print("文件已存在！")
         else:
             # 文件不存在时
             msg = "确定上传 %s 文件？ < Y/n >" %file_name

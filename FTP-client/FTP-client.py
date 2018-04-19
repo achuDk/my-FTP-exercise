@@ -114,11 +114,12 @@ class ClientHandler():
         # 接受服务端的响应，服务端要判断put的文件是否存在以及是否完整
         is_exists = self.socket.recv(1024).decode("utf8")
         cmd = input(is_exists )
-        if cmd != "n":
-            print("取消上传！")
+        if cmd == "n" or cmd == "N":
+            print("已取消上传！")
         else:
             print("上传中... ")
-            pass
+
+
 
 
 
