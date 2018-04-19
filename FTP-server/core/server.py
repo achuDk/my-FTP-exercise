@@ -17,8 +17,8 @@ STATUS_CODE = {
     257 : "Ready to send file",
     258 : "Md5 verification",
 
-    800 : "File exist,but not complete,continue?",
-    801 : "File exist",
+    800: "File exist,but not complete,continue? [ Y/n ]",
+    801 : "File already exist",
     802 : "Ready to recieve data",
 
     900 : "Md5 validate success"
@@ -121,13 +121,44 @@ class ServerHanlder(socketserver.BaseRequestHandler):
         file_name = data.get("file_name")
         file_size = data.get("file_size")
         # 文件完整路径及文件名
-        target_path = os.path.join(self.main_path,"home",self.user,data.get("target_path"),file_name)
-        print("target_path",target_path)
+        target_path = os.path.join(self.main_path,"home",self.user,data.get("target_path"))
+        # print("target_path",target_path)
+        abs_path = os.path.join(self.main_path,"home",self.user,data.get("target_path"),file_name)
+
+        has_received = 0
 
         # 判断本地是否已经存在文件且文件是否完整
-        if os.path.exists(target_path):
+        if os.path.exists(abs_path):
             print("文件已存在！")
+            # 判断文件是否完整，是否需要断点续传
+            file_received_size = os.stat(abs_path).st_size
+            if file_received_size < file_size:
+                # 断点续传
+                self.request.sendall(STATUS_CODE[800].encode("utf8"))
+                # 接受客户是否进行断点续传的决定
+                choice = self.request.recv(1024).decode("utf8")
+                if choice == "N":
+                    # 客户选择重新上传
+                    f = open(abs_path,"wb")
+                else:
+                    # 客户同意断点续传
+                    f = open(abs_path,"ab")
+
+
+
+            else:
+                # 文件存在且完整
+                self.request.sendall(STATUS_CODE[801].encode("utf8"))
+                # 本次通信结束，返回None
+                return
+
         else:
             # 文件不存在时
-            msg = "确定上传 %s 文件？ < Y/n >" %file_name
-            self.request.sendall(msg.encode("utf8"))
+            self.request.sendall(STATUS_CODE[802].encode("utf8"))
+            f = open(abs_path, "wb")
+
+        while has_received < file_size:
+            data = self.request.recv(1024).decode("utf8")
+            f.write(data)
+            has_received += len(data)
+        f.close()

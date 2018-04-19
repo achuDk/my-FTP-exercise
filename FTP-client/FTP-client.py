@@ -15,7 +15,7 @@ STATUS_CODE = {
     257 : "Ready to send file",
     258 : "Md5 verification",
 
-    800 : "File exist,but not complete,continue?",
+    800 : "File exist,but not complete,continue? [ Y/n ]",
     801 : "File exist",
     802 : "Ready to recieve data",
 
@@ -75,6 +75,7 @@ class ClientHandler():
 
     # 交互函数
     def interactive(self):
+        print("与服务端连接成功，请执行命令：")
         # 用户密码登录验证
         if self.authenticate():
             # 用户执行cmd
@@ -102,10 +103,10 @@ class ClientHandler():
         print("执行 put 的文件大小:", file_size)
         # 定义通信内容
         data = {
-            "action":"put",
-            "file_name":file_name,
-            "file_seze":file_size,
-            "target_path":target_path
+            "action\t\t":"put",
+            "file_name\t":file_name,
+            "file_seze\t":file_size,
+            "target_path\t":target_path
         }
 
         # 发送通信内容
@@ -113,12 +114,41 @@ class ClientHandler():
 
         # 接受服务端的响应，服务端要判断put的文件是否存在以及是否完整
         is_exists = self.socket.recv(1024).decode("utf8")
-        cmd = input(is_exists )
-        if cmd == "n" or cmd == "N":
-            print("已取消上传！")
-        else:
-            print("上传中... ")
 
+        # 根据服务器返回的响应码，做出对应动作
+        has_sent = 0
+        if is_exists == 800:
+            # 断点续传
+            choice = input(STATUS_CODE[800])
+            self.socket.sendall(choice.upper().encode("utf9"))
+            if choice == "n" or choice == "N":
+                # 客户选择重新上传
+                print("即将重新上传文件")
+                pass
+            else:
+                # 进行断点续传
+                pass
+
+
+        elif is_exists == 801:
+            print(STATUS_CODE[is_exists])
+            # 服务器端文件存在且完整，继续交互，返回None
+            return
+        elif is_exists == 802:
+            print(STATUS_CODE[is_exists])
+            # 上传文件
+        else:
+            print("未知错误！请重试 ")
+            return
+        ###########################################
+
+        f = open(local_path, "rb")
+        while has_sent < file_size:
+            data = f.read(1024)
+            self.socket.send(data)
+            has_sent += len(data)
+        f.close()
+        print("文件上传完毕！")
 
 
 
