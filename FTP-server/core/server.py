@@ -17,7 +17,7 @@ STATUS_CODE = {
     257 : "Ready to send file",
     258 : "Md5 verification",
 
-    800: "File exist,but not complete,continue? [ Y/n ]",
+    800: "File exist,but not complete,continue ?",
     801 : "File already exist",
     802 : "Ready to recieve data",
 
@@ -31,33 +31,38 @@ class ServerHanlder(socketserver.BaseRequestHandler):
 
     def handle(self):
         print('handler 函数开始执行...')
+        # print("连接的实例对象",self.request)
 
         # 定义连接循环
-        while True:
+        while self.request:
             data = self.request.recv(1024).strip()
-            data = json.loads(data.decode("utf8"))
+            if data:
+                data = json.loads(data.decode("utf8"))
 
-            # 通信body样例
-            """
-                data = {
-                    "action":"auth",
-                    "user":"test",
-                    "pwd":123
-                }
-            """
+                # 通信body样例
+                """
+                    data = {
+                        "action":"auth",
+                        "user":"test",
+                        "pwd":123
+                    }
+                """
 
-            # 验证 action 不能为空
-            if data.get("action"):
-                if hasattr(self,data.get("action")):
-                    func = getattr(self,data.get("action"))
-                    # print(data.get("action"))
-                    # print("data",data)
-                    func(**data)
+                # 验证 action 不能为空
+                if data.get("action"):
+                    if hasattr(self,data.get("action")):
+                        func = getattr(self,data.get("action"))
+                        # print(data.get("action"))
+                        # print("data",data)
+                        func(**data)
+                    else:
+                        print("没有这个命令，请重新开始。")
                 else:
-                    print("没有这个命令，请重新开始。")
-            else:
-                print("命令不能为空! 请重新开始。")
+                    print("命令不能为空! 请重新开始。")
 
+
+                print("\n################################################")
+                continue
 
     # auth 登录验证功能
     def auth(self,**data):
@@ -105,11 +110,14 @@ class ServerHanlder(socketserver.BaseRequestHandler):
         cursor.execute("SELECT passwd from user WHERE username=%s",(loginname,))
         db_passwd = cursor.fetchall()
         # print("========>",db_passwd,type(db_passwd))
-        if pwd == db_passwd[0]["passwd"]:
-            # 如果验证通过，定义对象变量 user
-            self.user = loginname
-            self.main_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            return loginname
+        if db_passwd:
+            if pwd == db_passwd[0]["passwd"]:
+                # 如果验证通过，定义对象变量 user
+                self.user = loginname
+                self.main_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                return loginname
+        # 验证失败，返回空
+        return
 
         conn.commit()
         cursor.close()
@@ -117,7 +125,7 @@ class ServerHanlder(socketserver.BaseRequestHandler):
 
     def put(self,**data):
         print("接受到来自客户端的 put 命令 : put")
-        print("data:",data)
+        # print("data >>>",data,type(data))
         file_name = data.get("file_name")
         file_size = data.get("file_size")
         # 文件完整路径及文件名
@@ -133,32 +141,34 @@ class ServerHanlder(socketserver.BaseRequestHandler):
             # 判断文件是否完整，是否需要断点续传
             file_received_size = os.stat(abs_path).st_size
             if file_received_size < file_size:
+                print("但是文件不完整，等待客户决定是否进行断点续传")
                 # 断点续传
-                self.request.sendall(STATUS_CODE[800].encode("utf8"))
+                self.request.sendall("800".encode("utf8"))
                 # 接受客户是否进行断点续传的决定
                 choice = self.request.recv(1024).decode("utf8")
                 if choice == "N":
-                    # 客户选择重新上传
+                    print("客户选择重新上传")
                     f = open(abs_path,"wb")
                 else:
-                    # 客户同意断点续传
-                    f = open(abs_path,"ab")
-
-
-
+                    print("客户同意进行断点续传，续传中...")
+                    # has_received = file_received_size
+                    # 向客户端发送文件已上传部分的大小
+                    self.request.sendall(str(file_received_size).encode("utf8"))
+                    # 以追加模式继续写入文件
+                    f = open(abs_path, "ab")
             else:
                 # 文件存在且完整
-                self.request.sendall(STATUS_CODE[801].encode("utf8"))
+                self.request.sendall("801".encode("utf8"))
                 # 本次通信结束，返回None
                 return
-
         else:
             # 文件不存在时
-            self.request.sendall(STATUS_CODE[802].encode("utf8"))
+            self.request.sendall("802".encode("utf8"))
             f = open(abs_path, "wb")
 
         while has_received < file_size:
-            data = self.request.recv(1024).decode("utf8")
+            data = self.request.recv(1024)
             f.write(data)
             has_received += len(data)
+        print("【 %s 】文件上传完成" % file_name)
         f.close()
