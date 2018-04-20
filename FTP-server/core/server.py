@@ -131,7 +131,7 @@ class ServerHanlder(socketserver.BaseRequestHandler):
         # 文件完整路径及文件名
         target_path = os.path.join(self.main_path,"home",self.user,data.get("target_path"))
         # print("target_path",target_path)
-        abs_path = os.path.join(self.main_path,"home",self.user,data.get("target_path"),file_name)
+        abs_path = os.path.join(target_path,file_name)
 
         has_received = 0
 
@@ -172,3 +172,18 @@ class ServerHanlder(socketserver.BaseRequestHandler):
             has_received += len(data)
         print("【 %s 】文件上传完成" % file_name)
         f.close()
+
+    def ls(self,**data):
+        # print(self.main_path)
+        file_list = os.listdir(os.path.join(self.main_path,"home",self.user))
+        print(file_list)
+
+        file_str = "\n".join(file_list)
+
+        # 【注意】为防止目录为空导致程序阻塞
+        if not file_list:
+            file_str = "<Empty dir>\n"
+        self.request.sendall(file_str.encode("utf*"))
+
+    def cd(self,**data):
+        pass

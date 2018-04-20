@@ -162,7 +162,23 @@ class ClientHandler():
             sys.stdout.write("[%s%%] %s\r" %(rate_num,"#"*rate_num))
         self.flag = rate_num
 
+    def ls(self,*cmd_list):
+        data = {
+            "action":"ls",
+        }
+        self.socket.sendall(json.dumps(data).encode("utf8"))
+        ls_dir = self.socket.recv(1024).decode("utf8")
+        print(ls_dir)
 
+
+    def cd(self,*cmd_list):
+        data = {
+            "action":"cd",
+            "dirname":cmd_list[1]
+        }
+        self.socket.sendall(json.dumps(data).encode("utf8"))
+        msg = self.socket.recv(1024).decode("utf8")
+        print(msg)
 
     # 登录验证函数
     def authenticate(self):
