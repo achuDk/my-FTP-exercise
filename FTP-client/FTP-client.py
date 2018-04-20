@@ -81,7 +81,7 @@ class ClientHandler():
         if self.authenticate():
             while True:
                 # 用户执行cmd
-                cmd = input("[ %s ]# "%self.user).strip()
+                cmd = input("[ %s  %s]# "%(self.user,self.cur_dir)).strip()
                 if not cmd:continue
                 if cmd == "exit" or cmd == "quit":exit()
                 # 接收参数列表
@@ -177,8 +177,10 @@ class ClientHandler():
             "dirname":cmd_list[1]
         }
         self.socket.sendall(json.dumps(data).encode("utf8"))
-        msg = self.socket.recv(1024).decode("utf8")
-        print(msg)
+        receive_dir = self.socket.recv(1024).decode("utf8")
+        # print(receive_dir)
+        self.cur_dir = os.path.basename(receive_dir)
+
 
     # 登录验证函数
     def authenticate(self):
@@ -216,6 +218,7 @@ class ClientHandler():
 
         if response["status_code"] == 254:
             self.user = user
+            self.cur_dir = "/"+self.user
             print(STATUS_CODE[254])
             return True
         else:

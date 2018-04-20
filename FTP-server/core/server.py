@@ -110,18 +110,17 @@ class ServerHanlder(socketserver.BaseRequestHandler):
         cursor.execute("SELECT passwd from user WHERE username=%s",(loginname,))
         db_passwd = cursor.fetchall()
         # print("========>",db_passwd,type(db_passwd))
+        conn.commit()
+        cursor.close()
+        conn.close()
         if db_passwd:
             if pwd == db_passwd[0]["passwd"]:
                 # 如果验证通过，定义对象变量 user
                 self.user = loginname
-                self.main_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                self.main_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),"home",self.user)
                 return loginname
         # 验证失败，返回空
         return
-
-        conn.commit()
-        cursor.close()
-        conn.close()
 
     def put(self,**data):
         print("接受到来自客户端的 put 命令 : put")
@@ -129,7 +128,7 @@ class ServerHanlder(socketserver.BaseRequestHandler):
         file_name = data.get("file_name")
         file_size = data.get("file_size")
         # 文件完整路径及文件名
-        target_path = os.path.join(self.main_path,"home",self.user,data.get("target_path"))
+        target_path = os.path.join(self.main_path,data.get("target_path"))
         # print("target_path",target_path)
         abs_path = os.path.join(target_path,file_name)
 
@@ -175,7 +174,7 @@ class ServerHanlder(socketserver.BaseRequestHandler):
 
     def ls(self,**data):
         # print(self.main_path)
-        file_list = os.listdir(os.path.join(self.main_path,"home",self.user))
+        file_list = os.listdir(self.main_path)
         print(file_list)
 
         file_str = "\n".join(file_list)
@@ -186,4 +185,15 @@ class ServerHanlder(socketserver.BaseRequestHandler):
         self.request.sendall(file_str.encode("utf*"))
 
     def cd(self,**data):
-        pass
+        dirname = data.get("dirname")
+        if dirname == "..":
+            self.main_path = os.path.dirname(self.main_path)
+        else:
+            self.main_path = os.path.join(self.main_path,dirname)
+        self.request.sendall(self.main_path.encode("utf8"))
+
+        """
+        cd 功能补全：
+            1. 增加输入目录名错误时的处理；
+            2. 增加权限控制，不准客户出自己的家目录
+        """
