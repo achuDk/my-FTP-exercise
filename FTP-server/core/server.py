@@ -196,4 +196,8 @@ class ServerHanlder(socketserver.BaseRequestHandler):
         cd 功能补全：
             1. 增加输入目录名错误时的处理；
             2. 增加权限控制，不准客户出自己的家目录
+        mkdir 功能
         """
+
+    # def mkdir(self):
+    #     pass
